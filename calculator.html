@@ -2,33 +2,71 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Palworld 1.0 — Pal Passive Skills</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Palworld 1.0 — Passive Build Calculator</title>
 <style>
-  :root { --bg:#12151b; --panel:#1b2029; --line:#2c3340; --fg:#e6e9ef; --dim:#8b93a3; --gold:#ffd83f; --cyan:#68ffd8; --red:#ff7a59; }
-  * { box-sizing: border-box; }
+  :root { --bg:#12151b; --panel:#1b2029; --line:#2c3340; --fg:#e6e9ef; --dim:#8b93a3; --gold:#ffd83f; --cyan:#68ffd8; --red:#ff7a59;
+          --good:#4ade80; --bad:#f87171; }
+  * { box-sizing:border-box; }
   body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.45 "Segoe UI", system-ui, sans-serif; }
   header { padding:18px 24px 10px; display:flex; flex-wrap:wrap; align-items:center; gap:14px; }
   h1 { margin:0; font-size:20px; font-weight:600; }
-  #global { flex:1; min-width:240px; max-width:420px; padding:8px 12px; border-radius:8px; border:1px solid var(--line); background:var(--panel); color:var(--fg); font-size:14px; }
-  button { padding:7px 12px; border-radius:8px; border:1px solid var(--line); background:var(--panel); color:var(--fg); cursor:pointer; }
-  button:hover { border-color:var(--cyan); }
-  #count { color:var(--dim); }
+  h2 { margin:0 0 10px; font-size:15px; font-weight:600; color:var(--dim); text-transform:uppercase; letter-spacing:.04em; }
   a.nav { margin-left:auto; color:var(--cyan); text-decoration:none; padding:7px 12px; border:1px solid var(--line); border-radius:8px; background:var(--panel); }
-  a.nav:hover { border-color:var(--cyan); }
-  .wrap { padding:0 24px 40px; }
-  table { width:100%; min-width:1200px; table-layout:fixed; border-collapse:separate; border-spacing:0; }
-  thead th { position:sticky; background:#171b23; z-index:2; text-align:left; font-weight:600; border-bottom:1px solid var(--line); }
-  thead tr.titles th { top:0; padding:10px 8px 6px; cursor:pointer; user-select:none; white-space:nowrap; }
-  thead tr.filters th { top:38px; padding:0 8px 8px; }
-  thead tr.titles th .arrow { color:var(--dim); font-size:11px; margin-left:4px; }
-  thead tr.titles th.sorted .arrow { color:var(--cyan); }
-  thead input, thead select { width:100%; padding:5px 7px; border-radius:6px; border:1px solid var(--line); background:var(--bg); color:var(--fg); font-size:12px; }
-  tbody td { padding:8px; border-bottom:1px solid var(--line); vertical-align:middle; }
-  tbody tr:hover td { background:#1f2530; }
-  td.effect { white-space:pre-line; }
-  td.pals { color:var(--dim); font-size:12.5px; }
-  td.c { text-align:center; }
+  a.nav:hover, button:hover { border-color:var(--cyan); }
+  button { padding:6px 11px; border-radius:8px; border:1px solid var(--line); background:var(--panel); color:var(--fg); cursor:pointer; font:inherit; font-size:13px; }
+  input, select { padding:7px 10px; border-radius:8px; border:1px solid var(--line); background:var(--bg); color:var(--fg); font:inherit; font-size:13px; }
 
+  main { display:grid; grid-template-columns:minmax(380px, 1fr) minmax(420px, 1.25fr); gap:20px; padding:0 24px 30px; align-items:start; }
+  @media (max-width: 960px) { main { grid-template-columns:1fr; } }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px; }
+  #build { position:sticky; top:12px; max-height:calc(100vh - 24px); overflow:auto; }
+
+  /* slots */
+  .slots { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
+  .slot { min-height:44px; border:1px dashed var(--line); border-radius:6px; display:flex; align-items:center; justify-content:center; color:var(--dim); font-size:13px; }
+  .slot .plate { width:100%; cursor:pointer; position:relative; }
+  .slot .plate::after { content:"✕"; position:absolute; right:8px; color:#fff8; font-size:12px; }
+  .slot .plate:hover::after { color:#fff; }
+  .slot .plate .tree, .slot .plate .tag { margin-right:18px; }
+  .row-btns { display:flex; gap:8px; align-items:center; margin-bottom:16px; flex-wrap:wrap; }
+  #copied { color:var(--good); font-size:12px; opacity:0; transition:opacity .2s; }
+
+  /* totals */
+  .group { margin-bottom:14px; }
+  .group h3 { margin:0 0 6px; font-size:12px; color:var(--dim); font-weight:600; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid var(--line); padding-bottom:4px; }
+  .stat { display:grid; grid-template-columns:150px 64px 1fr; gap:10px; align-items:center; padding:3px 0; }
+  .stat .lbl { font-size:13px; }
+  .stat .val { font-weight:700; text-align:right; font-variant-numeric:tabular-nums; }
+  .stat .val.good { color:var(--good); } .stat .val.bad { color:var(--bad); } .stat .val.neutral { color:var(--dim); }
+  .bar { position:relative; height:8px; background:#0f1217; border-radius:4px; }
+  .bar::before { content:""; position:absolute; left:50%; top:-2px; bottom:-2px; width:1px; background:var(--line); }
+  .bar i { position:absolute; top:0; bottom:0; border-radius:4px; }
+  .bar i.good { background:var(--good); } .bar i.bad { background:var(--bad); }
+  .src { grid-column:2 / 4; font-size:11.5px; color:var(--dim); margin-top:-2px; }
+  .flags { display:flex; flex-wrap:wrap; gap:6px; }
+  .flag { font-size:12px; padding:3px 9px; border-radius:12px; background:#243044; }
+  .note { font-size:12px; color:var(--gold); margin-top:8px; }
+  .empty { color:var(--dim); font-size:13px; padding:10px 0; }
+  .hint { font-size:12px; color:var(--dim); margin-top:14px; line-height:1.5; }
+
+  /* picker */
+  .controls { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; }
+  .controls input { flex:1; min-width:180px; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+  .chip { padding:3px 10px; border-radius:12px; border:1px solid var(--line); background:var(--bg); cursor:pointer; font-size:12.5px; user-select:none; }
+  .chip.on { border-color:var(--cyan); color:var(--cyan); }
+  #list { display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:8px; }
+  .card { border:1px solid var(--line); border-radius:8px; background:var(--bg); cursor:pointer; overflow:hidden; transition:border-color .1s; }
+  .card:hover { border-color:var(--cyan); }
+  .card.sel { outline:2px solid var(--cyan); }
+  .card.full { opacity:.45; cursor:not-allowed; }
+  .card .plate { border-radius:0; border-top:0; border-right:0; }
+  .card .fx { padding:6px 10px 8px; font-size:12px; color:#c9cfdb; white-space:pre-line; }
+  .card .fx b { font-weight:600; } .card .fx b.good { color:var(--good); } .card .fx b.bad { color:var(--bad); }
+  #listcount { color:var(--dim); font-size:12px; margin:-4px 0 8px; }
+  footer { color:var(--dim); font-size:12px; padding:0 24px 30px; }
+  footer a { color:var(--cyan); }
   :root { --plate-bg:url(data:image/webp;base64,UklGRv4BAABXRUJQVlA4IPIBAACQEQCdASoIASAAPmUqkUWlpiUZ684kQAZEtICDAAsIJ0l/g1c0zDQ267NCl1KzZtqG+RJXxlnZievySWvZ0HuLMnYxRF5qxwj8sCN3GAsZO3sZcfqtCyJGK9utyIhmP0cRy4snodRFLwIvF8D62db0W3Szz+KZDW75WZwpyUBUQynJQ/yTm2HQa3M4/HmVNb9bmFkpAAD+8dLXU6Fn7GADuagx4wB80BmOaWCsJi1J6pFPqqx7PpHx1NjF7Z+qceqFMAE2+sUb4oH2QIHL1HdV4HEUFftTjRzz7TX+nyU3Gdn2wDWDGa01H68hSUcQpAZoA4rj5RLVyYcQ3vc0iWi79yoGv+BBuJ1+HzyMrRMzj3yGAgHpAQ+ifCelSn4Rnk6+8Ltr3qeG+CK8f74cviICdVZ3q3/dx/RepSqH426FI/cOy6N+Ocf9c11M4hnBQUDegwoakCqTp0cKTRBXktRj/09+PF2OfmS/Ctq4EGiKkFXg8GPxvNnptRPH9yYsiC7YgdZyoYSJY0c7JTchDzVNTZ/e8HqCeHahUXd2hSVQINy/UP1r/ryouRYQDKeTcvWmQusK/m96VxMDYcdJXQ+1anq8wgvTmprLGq5hmiUG5TAwmANSw3V6Xt1gsjb04khVsrUX7OTi5xjVHDiOX2FloAA=); }
   /* Name banner styled like the in-game / paldb passive plate */
   .plate { display:flex; align-items:center; gap:8px; padding:3px 8px 3px 4px; border-left:5px solid var(--line); border-radius:3px; }
@@ -50,155 +88,181 @@
   .rn img.rank { filter:invert(80%) sepia(90%) saturate(7456%) hue-rotate(359deg) brightness(95%) contrast(115%); transform:scaleY(-1); }
 
 
-  .tier { display:inline-block; min-width:30px; text-align:center; font-weight:700; border-radius:5px; padding:1px 6px; font-variant-numeric:tabular-nums; }
-  .t5 { background:#4d09cb; } .t4 { background:#1f6f63; } .t3,.t2 { background:#7a6500; } .t1 { background:#444; } .tn { background:#7a2e1a; }
-  .implant { font-size:12px; padding:2px 7px; border-radius:10px; background:#243044; }
-  .implant.Disposable { background:#3a2f55; }
-  footer { color:var(--dim); font-size:12px; padding:0 24px 30px; }
-  footer a { color:var(--cyan); }
 </style>
 </head>
 <body>
 <header>
-  <h1>Palworld 1.0 — Pal Passive Skills</h1>
-  <input id="global" placeholder="Search everything…  (e.g. work speed, attack, Jetragon)">
-  <button id="reset">Reset filters</button>
-  <span id="count"></span>
-  <a class="nav" href="calculator.html">Build calculator →</a>
+  <h1>Palworld 1.0 — Passive Build Calculator</h1>
+  <a class="nav" href="index.html">← Passive table</a>
 </header>
-<div class="wrap">
-<table>
-  <colgroup>
-    <col style="width:70px"><col style="width:240px"><col style="width:auto"><col style="width:105px">
-    <col style="width:100px"><col style="width:95px"><col style="width:80px"><col style="width:22%">
-  </colgroup>
-  <thead>
-    <tr class="titles">
-      <th data-k="rank">Tier<span class="arrow">▲▼</span></th>
-      <th data-k="name">Passive<span class="arrow">▲▼</span></th>
-      <th data-k="effect">Effect<span class="arrow">▲▼</span></th>
-      <th data-k="implant">Implant<span class="arrow">▲▼</span></th>
-      <th data-k="world_tree">World Tree<span class="arrow">▲▼</span></th>
-      <th data-k="mutation">Mutation<span class="arrow">▲▼</span></th>
-      <th data-k="weight">Weight<span class="arrow">▲▼</span></th>
-      <th data-k="pals">Pals that can have it<span class="arrow">▲▼</span></th>
-    </tr>
-    <tr class="filters">
-      <th><select data-f="rank">
-        <option value="">All</option><option value="pos">Positive</option><option value="neg">Negative</option>
-        <option value="5">5</option><option value="4">4</option><option value="3">3</option><option value="2">2</option>
-        <option value="1">1</option><option value="-1">-1</option><option value="-2">-2</option><option value="-3">-3</option>
-        <option value="ge3">≥ 3</option><option value="ge4">≥ 4</option>
-      </select></th>
-      <th><input data-f="name" placeholder="filter…"></th>
-      <th><input data-f="effect" placeholder="filter…  (use | for OR)"></th>
-      <th><select data-f="implant"><option value="">All</option><option>Permanent</option><option>Disposable</option><option value="none">None</option><option value="any">Any</option></select></th>
-      <th><select data-f="world_tree"><option value="">All</option><option value="1">Yes</option><option value="0">No</option></select></th>
-      <th><select data-f="mutation"><option value="">All</option><option value="1">Yes</option><option value="0">No</option></select></th>
-      <th><input data-f="weight" placeholder="e.g. >=50"></th>
-      <th><input data-f="pals" placeholder="filter…"></th>
-    </tr>
-  </thead>
-  <tbody id="rows"></tbody>
-</table>
-</div>
+<main>
+  <section class="panel" id="build">
+    <h2>Your Pal (<span id="slotcount">0</span>/4)</h2>
+    <div class="slots" id="slots"></div>
+    <div class="row-btns">
+      <button id="clear">Clear</button>
+      <button id="share">Copy share link</button>
+      <label style="font-size:12.5px;color:var(--dim)"><input type="checkbox" id="nolimit"> allow more than 4 (compare)</label>
+      <span id="copied">Link copied</span>
+    </div>
+    <h2>Total effect</h2>
+    <div id="totals"></div>
+    <div class="hint">
+      Passives that change the same stat add together (e.g. Legend +20% and Ferocious +20% make +40% Attack).
+      These are the passive bonuses only. Your Pal's IVs, condenser rank, souls and gear are applied on top.
+      Green means better, red means worse. For hunger, SAN drain, cooldown and buy price, lower is better.
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Pick passives</h2>
+    <div class="controls">
+      <input id="q" placeholder="Search name or effect…  (e.g. attack, work, fire)">
+      <select id="affects"><option value="">Affects any stat</option></select>
+    </div>
+    <div class="chips" id="tiers"></div>
+    <div id="listcount"></div>
+    <div id="list"></div>
+  </section>
+</main>
 <footer>
-  Data &amp; tier icons: <a href="https://paldb.cc/en/Passive_Skills">paldb.cc</a> (game files, Palworld 1.0). Tier = in-game passive rank (-3 … +5).
-  Weight = relative spawn weight (higher = more common). Text filters are case-insensitive substring matches; use <code>|</code> for OR and a leading <code>!</code> to exclude.
-  Click a header to sort, click again to reverse.
+  Data &amp; tier icons: <a href="https://paldb.cc/en/Passive_Skills">paldb.cc</a> (game files, Palworld 1.0). Palworld © Pocketpair, Inc. Fan-made, non-commercial.
 </footer>
 <script>
 const DATA = [{"name": "Demon’s Hand", "rank": 5, "icon": "T_icon_skillstatus_rank_arrow_05.webp", "effect": "Work Speed +90%\nSAN decreases +15.0% faster\nWorld Tree resources will not vanish when approached.", "implant": "Disposable", "world_tree": true, "mutation": false, "weight": 5, "pals": [], "stats": {"work_speed": 90, "sanity": 15, "world_tree": true}, "note": ""}, {"name": "Dimensional Leap", "rank": 5, "icon": "T_icon_skillstatus_rank_arrow_05.webp", "effect": "Movement Speed +50%\nIncreases Hunger depletion rate by +15.0%\nWorld Tree resources will not vanish when approached.", "implant": "Disposable", "world_tree": true, "mutation": false, "weight": 5, "pals": [], "stats": {"move_speed": 50, "hunger": 15, "world_tree": true}, "note": ""}, {"name": "God of Destruction", "rank": 5, "icon": "T_icon_skillstatus_rank_arrow_05.webp", "effect": "Attack +40%\nDefense +20%\nMax Health -50%\nWorld Tree resources will not vanish when approached.", "implant": "Disposable", "world_tree": true, "mutation": false, "weight": 5, "pals": [], "stats": {"attack": 40, "defense": 20, "max_hp": -50, "world_tree": true}, "note": ""}, {"name": "Hermit Sage", "rank": 5, "icon": "T_icon_skillstatus_rank_arrow_05.webp", "effect": "SAN drops +50.0% slower.\nWork Speed -20%\nWorld Tree resources will not vanish when approached.", "implant": "Disposable", "world_tree": true, "mutation": false, "weight": 5, "pals": [], "stats": {"sanity": -50, "work_speed": -20, "world_tree": true}, "note": ""}, {"name": "Sanctified Meat Shield", "rank": 5, "icon": "T_icon_skillstatus_rank_arrow_05.webp", "effect": "Defense +50%\nAttack -30%\nWorld Tree resources will not vanish when approached.", "implant": "Disposable", "world_tree": true, "mutation": false, "weight": 5, "pals": [], "stats": {"defense": 50, "attack": -30, "world_tree": true}, "note": ""}, {"name": "Twin-Edged Holy Blade", "rank": 5, "icon": "T_icon_skillstatus_rank_arrow_05.webp", "effect": "Attack +50%\nDefense -30%\nWorld Tree resources will not vanish when approached.", "implant": "Disposable", "world_tree": true, "mutation": false, "weight": 5, "pals": [], "stats": {"attack": 50, "defense": -30, "world_tree": true}, "note": ""}, {"name": "World Tree's Bounty", "rank": 5, "icon": "T_icon_skillstatus_rank_arrow_05.webp", "effect": "Decrease Hunger depletion rate by +50.0%\nHP -20%\nWorld Tree resources will not vanish when approached.", "implant": "Disposable", "world_tree": true, "mutation": false, "weight": 5, "pals": [], "stats": {"hunger": -50, "max_hp": -20, "world_tree": true}, "note": ""}, {"name": "Babysitter", "rank": 4, "icon": "T_icon_skillstatus_rank_arrow_04.webp", "effect": "While at a base, increases egg production speed by +30% and incubation speed by +30% for Pals assigned to a Breeding Farm.", "implant": "Disposable", "world_tree": false, "mutation": true, "weight": 100, "pals": [], "stats": {"egg_speed": 30, "hatch_speed": 30}, "note": ""}, {"name": "Demon God", "rank": 4, "icon": "T_icon_skillstatus_rank_arrow_04.webp", "effect": "Attack +30%\nDefense +5%", "implant": "Disposable", "world_tree": false, "mutation": false, "weight": 5, "pals": [], "stats": {"attack": 30, "defense": 5}, "note": ""}, {"name": "Diamond Body", "rank": 4, "icon": "T_icon_skillstatus_rank_arrow_04.webp", "effect": "Defense +30%\nImmune to Flinch\nImmune to Knockback", "implant": "Disposable", "world_tree": false, "mutation": false, "weight": 5, "pals": [], "stats": {"defense": 30, "immune_flinch": true, "immune_knockback": true}, "note": ""}, {"name": "Eternal Engine", "rank": 4, "icon": "T_icon_skillstatus_rank_arrow_04.webp", "effect": "Max Stamina +75%\n*This effect is only valid for rideable pals.", "implant": "Disposable", "world_tree": false, "mutation": false, "weight": 5, "pals": [], "stats": {"stamina": 75}, "note": ""}, {"name": "Eternal Flame", "rank": 4, "icon": "T_icon_skillstatus_rank_arrow_04.webp", "effect": "30% increase in Fire attack damage\n30% increase in Lightning attack damage", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": ["Blazamut Ryu"], "stats": {"dmg_Fire": 30, "dmg_Electric": 30}, "note": ""}, {"name": "Heart of the Immovable King", "rank": 4, "icon": "T_icon_skillstatus_rank_arrow_04.webp", "effect": "SAN drops +20.0% slower.", "implant": "Disposable", "world_tree": false, "mutation": false, "weight": 5, "pals": [], "stats": {"sanity": -20}, "note": ""}, {"name": "Heavily Armored", "rank": 4, "icon": "T_icon_skillstatus_rank_arrow_04.webp", "effect": "Immune to Explosion Damage", "implant": "Disposable", "world_tree": false, "mutation": true, "weight": 100, "pals": [], "stats": {"immune_explosion": true}, "note": ""}, {"name": "Idiosyncratic", "rank": 4, "icon": "T_icon_skillstatus_rank_arrow_04.webp", "effect": "Pal and Player Auto Health Regeneration Rate +50%\nDefense +25%\nImmune to Poison Damage\nImmune to Burn Damage", "implant": "Disposable", "world_tree": false, "mutation": true, "weight": 100, "pals": [], "stats": {"hp_regen": 50, "p_hp_regen": 50, "defense": 25, "immune_poison": true, "immune_burn": true}, "note": ""}, {"name": "Immortality", "rank": 4, "icon": "T_icon_skillstatus_rank_arrow_04.webp", "effect": "Absorbs 5% of damage dealt and restores Health.\nPal Auto Health Regeneration Rate +100%.\nAttack +15%.", "implant": "Disposable", "world_tree": false, "mutation": true, "weight": 100, "pals": [], "stats": {"life_steal": 5, "hp_regen": 100, "attack": 15}, "note": ""}, {"name": "Invader", "rank": 4, "icon": "T_icon_skillstatus_rank_arrow_04.webp", "effect": "30% increase in Dark attack damage.\n30% increase in Dragon attack damage.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": ["Xenolord"], "stats": {"dmg_Dark": 30, "dmg_Dragon": 30}, "note": ""}, {"name": "King of the Waves", "rank": 4, "icon": "T_icon_skillstatus_rank_arrow_04.webp", "effect": "50% increase movement speed on water.", "implant": "Disposable", "world_tree": false, "mutation": false, "weight": 5, "pals": [], "stats": {"swim_speed": 50}, "note": ""}, {"name": "Lavish Hospitality", "rank": 4, "icon": "T_icon_skillstatus_rank_arrow_04.webp", "effect": "Drop Items obtained from this Pal +100%", "implant": "", "world_tree": false, "mutation": false, "weight": 5, "pals": [], "stats": {"drops": 100}, "note": ""}, {"name": "Legend", "rank": 4, "icon": "T_icon_skillstatus_rank_arrow_04.webp", "effect": "Attack +20%\nDefense +20%\nMovement Speed increases 20%", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": ["Paladius", "Necromus", "Frostallion", "Frostallion Noct", "Neptilius", "Jetragon"], "stats": {"attack": 20, "defense": 20, "move_speed": 20}, "note": ""}, {"name": "Lightfooted", "rank": 4, "icon": "T_icon_skillstatus_rank_arrow_04.webp", "effect": "Mounted Jump Count +1", "implant": "", "world_tree": false, "mutation": false, "weight": 5, "pals": [], "stats": {"jumps": 1}, "note": ""}, {"name": "Lucky", "rank": 4, "icon": "T_icon_skillstatus_rank_arrow_04.webp", "effect": "Attack +15%\nDefense +15%\nWork Speed +20%", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"attack": 15, "defense": 15, "work_speed": 20}, "note": ""}, {"name": "Lunker", "rank": 4, "icon": "T_icon_skillstatus_rank_arrow_04.webp", "effect": "20% increase in Water attack damage\n20% increase in Ice attack damage\nDefense +20%", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": ["Neptilius"], "stats": {"dmg_Water": 20, "dmg_Ice": 20, "defense": 20}, "note": ""}, {"name": "Mastery of Fasting", "rank": 4, "icon": "T_icon_skillstatus_rank_arrow_04.webp", "effect": "Hunger decreases +20.0% slower.", "implant": "Disposable", "world_tree": false, "mutation": false, "weight": 5, "pals": [], "stats": {"hunger": -20}, "note": ""}, {"name": "Ranch Master", "rank": 4, "icon": "T_icon_skillstatus_rank_arrow_04.webp", "effect": "Farming's Work Suitability +2", "implant": "", "world_tree": false, "mutation": false, "weight": 5, "pals": [], "stats": {"farming": 2}, "note": ""}, {"name": "Remarkable Craftsmanship", "rank": 4, "icon": "T_icon_skillstatus_rank_arrow_04.webp", "effect": "Work Speed +75%", "implant": "Disposable", "world_tree": false, "mutation": false, "weight": 5, "pals": [], "stats": {"work_speed": 75}, "note": ""}, {"name": "Savior", "rank": 4, "icon": "T_icon_skillstatus_rank_arrow_04.webp", "effect": "30% increase in Neutral attack damage.\n30% increase in Grass attack damage.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": ["Hartalis"], "stats": {"dmg_Neutral": 30, "dmg_Grass": 30}, "note": ""}, {"name": "Siren of the Void", "rank": 4, "icon": "T_icon_skillstatus_rank_arrow_04.webp", "effect": "30% increase in Dark attack damage.\n30% increase in Ice attack damage.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": ["Bellanoir Libero"], "stats": {"dmg_Dark": 30, "dmg_Ice": 30}, "note": ""}, {"name": "Sky Strider", "rank": 4, "icon": "T_icon_skillstatus_rank_arrow_04.webp", "effect": "Mounted Jump Count +2", "implant": "Disposable", "world_tree": false, "mutation": true, "weight": 100, "pals": [], "stats": {"jumps": 2}, "note": ""}, {"name": "Swift", "rank": 4, "icon": "T_icon_skillstatus_rank_arrow_04.webp", "effect": "30% increase to movement speed.", "implant": "Disposable", "world_tree": false, "mutation": false, "weight": 5, "pals": [], "stats": {"move_speed": 30}, "note": ""}, {"name": "Vampiric", "rank": 4, "icon": "T_icon_skillstatus_rank_arrow_04.webp", "effect": "Absorbs 5% of damage dealt and restores Health.\nDoes not sleep at night and continues to work.", "implant": "Disposable", "world_tree": false, "mutation": false, "weight": 5, "pals": [], "stats": {"life_steal": 5, "night_work": true}, "note": ""}, {"name": "Ace Swimmer", "rank": 3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "40% increase movement speed on water.", "implant": "Permanent", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"swim_speed": 40}, "note": ""}, {"name": "Artisan", "rank": 3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "Work Speed +50%", "implant": "Permanent", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"work_speed": 50}, "note": ""}, {"name": "Burly Body", "rank": 3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "Defense +20%\nImmune to Flinch", "implant": "Permanent", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"defense": 20, "immune_flinch": true}, "note": ""}, {"name": "Celestial Emperor", "rank": 3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "30% increase in Neutral attack damage.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": ["Paladius"], "stats": {"dmg_Neutral": 30}, "note": ""}, {"name": "Diet Lover", "rank": 3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "Hunger decreases +15.0% slower.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"hunger": -15}, "note": ""}, {"name": "Divine Dragon", "rank": 3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "30% increase in Dragon attack damage.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": ["Jetragon"], "stats": {"dmg_Dragon": 30}, "note": ""}, {"name": "Earth Emperor", "rank": 3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "30% increase in Earth attack damage.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": ["Anubis"], "stats": {"dmg_Ground": 30}, "note": ""}, {"name": "Farmhand", "rank": 3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "Farming's Work Suitability +1", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"farming": 1}, "note": ""}, {"name": "Ferocious", "rank": 3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "Attack +20%", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"attack": 20}, "note": ""}, {"name": "Flame Emperor", "rank": 3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "30% increase in Fire attack damage.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": ["Blazamut"], "stats": {"dmg_Fire": 30}, "note": ""}, {"name": "Healing Coach", "rank": 3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "Player Auto Health Regeneration Rate +5%", "implant": "Permanent", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"p_hp_regen": 5}, "note": ""}, {"name": "Ice Emperor", "rank": 3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "30% increase in Ice attack damage.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": ["Frostallion"], "stats": {"dmg_Ice": 30}, "note": ""}, {"name": "Infinite Stamina", "rank": 3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "Max Stamina +50%\n*This effect is only valid for rideable pals.", "implant": "Permanent", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"stamina": 50}, "note": ""}, {"name": "Logging Foreman", "rank": 3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "25% increase in Player Logging Efficiency.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"p_logging": 25}, "note": ""}, {"name": "Lord of Lightning", "rank": 3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "30% increase in Lightning attack damage.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": ["Orserk"], "stats": {"dmg_Electric": 30}, "note": ""}, {"name": "Lord of the Sea", "rank": 3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "30% increase in Water attack damage.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": ["Jormuntide"], "stats": {"dmg_Water": 30}, "note": ""}, {"name": "Lord of the Underworld", "rank": 3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "30% increase in Dark attack damage.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": ["Necromus", "Frostallion Noct"], "stats": {"dmg_Dark": 30}, "note": ""}, {"name": "Mine Foreman", "rank": 3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "25% increase in Player Mining Efficiency.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"p_mining": 25}, "note": ""}, {"name": "Motivational Leader", "rank": 3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "25% increase in Player Work Speed.", "implant": "Permanent", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"p_work_speed": 25}, "note": ""}, {"name": "Noble", "rank": 3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "Increases the value of items when sold by +5%", "implant": "Permanent", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"sell_price": 5, "buy_price": -5}, "note": ""}, {"name": "Philanthropist", "rank": 3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "When assigned to a Breeding Farm, breeding speed is increased by 100%.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"breed_speed": 100}, "note": ""}, {"name": "Reload Master", "rank": 3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "Player Reload Speed +4%", "implant": "Permanent", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"p_reload": 4}, "note": ""}, {"name": "Runner", "rank": 3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "20% increase to movement speed.", "implant": "Permanent", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"move_speed": 20}, "note": ""}, {"name": "Serenity", "rank": 3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "Active skill cooldown reduction 30%\nAttack +10%", "implant": "Permanent", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"skill_cooldown": -30, "attack": 10}, "note": ""}, {"name": "Service-Minded", "rank": 3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "Drop Items obtained from this Pal +50%", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"drops": 50}, "note": ""}, {"name": "Spirit Emperor", "rank": 3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "30% increase in Grass attack damage.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": ["Lyleen"], "stats": {"dmg_Grass": 30}, "note": ""}, {"name": "Stronghold Strategist", "rank": 3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "10% increase in Player Defense.", "implant": "Permanent", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"p_defense": 10}, "note": ""}, {"name": "Vanguard", "rank": 3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "10% increase in Player Attack.", "implant": "Permanent", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"p_attack": 10}, "note": ""}, {"name": "Wellness Watcher", "rank": 3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "Player Stamina Consumption -5.0%", "implant": "Permanent", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"p_stamina_use": -5}, "note": ""}, {"name": "Workaholic", "rank": 3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "SAN drops +15.0% slower.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"sanity": -15}, "note": ""}, {"name": "Heavyweight", "rank": 2, "icon": "T_icon_skillstatus_rank_arrow_02.webp", "effect": "Defense +20%\nImmune to Knockback", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": ["Kingpaca", "Kingpaca Cryst", "Mammorest", "Mammorest Cryst", "Broncherry", "Broncherry Aqua", "Braloha", "Reptyro", "Reptyro Cryst", "Pierdon", "Pierdon Cryst", "Wumpo", "Wumpo Botan", "Dualith", "Dualith Noct", "Knocklem", "Knocklem Ignis", "Silvegis", "Aegidron"], "stats": {"defense": 20, "immune_knockback": true}, "note": ""}, {"name": "Musclehead", "rank": 2, "icon": "T_icon_skillstatus_rank_arrow_02.webp", "effect": "Attack +30%\nWork Speed -50%", "implant": "Permanent", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"attack": 30, "work_speed": -50}, "note": ""}, {"name": "Abnormal", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "10% decrease in incoming Neutral damage.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": ["Lovander"], "stats": {"res_Neutral": 10}, "note": ""}, {"name": "Aggressive", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "Attack +10%\nDefense -10%", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"attack": 10, "defense": -10}, "note": ""}, {"name": "Blood of the Dragon", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "10% increase in Dragon attack damage.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"dmg_Dragon": 10}, "note": ""}, {"name": "Botanical Barrier", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "10% decrease in incoming Grass damage.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"res_Grass": 10}, "note": ""}, {"name": "Brave", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "Attack +10%", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"attack": 10}, "note": ""}, {"name": "Capacitor", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "10% increase in Lightning attack damage.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"dmg_Electric": 10}, "note": ""}, {"name": "Cheery", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "10% decrease in incoming Dark damage.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"res_Dark": 10}, "note": ""}, {"name": "Coldblooded", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "10% increase in Ice attack damage.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"dmg_Ice": 10}, "note": ""}, {"name": "Conceited", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "Work Speed +10%\nDefense -10%", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"work_speed": 10, "defense": -10}, "note": ""}, {"name": "Dainty Eater", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "Hunger decreases +10.0% slower.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"hunger": -10}, "note": ""}, {"name": "Dragonkiller", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "10% decrease in incoming Dragon damage.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"res_Dragon": 10}, "note": ""}, {"name": "Earthquake Resistant", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "10% decrease in incoming Earth damage.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"res_Ground": 10}, "note": ""}, {"name": "Fine Furs", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "Increases the value of items when sold by +3%", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"sell_price": 3, "buy_price": -3}, "note": ""}, {"name": "Fit as a Fiddle", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "Max Stamina +25%\n*This effect is only valid for rideable pals.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"stamina": 25}, "note": ""}, {"name": "Fragrant Foliage", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "10% increase in Grass attack damage.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"dmg_Grass": 10}, "note": ""}, {"name": "Hard Skin", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "Defense +10%", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": ["Digtoise", "Warsect", "Warsect Terra", "Astegon"], "stats": {"defense": 10}, "note": ""}, {"name": "Heated Body", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "10% decrease in incoming Ice damage.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"res_Ice": 10}, "note": ""}, {"name": "Hooligan", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "Attack +15%\nWork Speed -10%", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": ["Gorirat", "Gorirat Terra"], "stats": {"attack": 15, "work_speed": -10}, "note": ""}, {"name": "Hydromaniac", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "10% increase in Water attack damage.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"dmg_Water": 10}, "note": ""}, {"name": "Impatient", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "Active skill cooldown reduction 15%", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"skill_cooldown": -15}, "note": ""}, {"name": "Insomnia", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "Does not sleep and continues to work even at night.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"night_work": true}, "note": ""}, {"name": "Insulated Body", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "10% decrease in incoming Lightning damage.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"res_Electric": 10}, "note": ""}, {"name": "Masochist", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "Defense +15%\nAttack -15%", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"defense": 15, "attack": -15}, "note": ""}, {"name": "Nimble", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "10% increase to movement speed.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"move_speed": 10}, "note": ""}, {"name": "Otherworldly Cells", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "Attack +10%\nFire damage reduction 15%\nLightning damage reduction 15%", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": ["Xenovader", "Xenogard", "Xenolord"], "stats": {"attack": 10, "res_Fire": 15, "dmg_Electric": 15}, "note": "In-game text says Lightning damage reduction 15%, but the game's effect data applies +15% Electric damage instead."}, {"name": "Positive Thinker", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "SAN drops +10.0% slower.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"sanity": -10}, "note": ""}, {"name": "Power of Gaia", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "10% increase in Earth attack damage.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"dmg_Ground": 10}, "note": ""}, {"name": "Pyromaniac", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "10% increase in Fire attack damage.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"dmg_Fire": 10}, "note": ""}, {"name": "Sadist", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "Attack +15%\nDefense -15%", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": ["Splatterina"], "stats": {"attack": 15, "defense": -15}, "note": ""}, {"name": "Serious", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "Work Speed +20%", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"work_speed": 20}, "note": ""}, {"name": "Sleek Stroke", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "30% increase movement speed on water.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"swim_speed": 30}, "note": ""}, {"name": "Spirit of Zen", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "10% increase in Neutral attack damage.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"dmg_Neutral": 10}, "note": ""}, {"name": "Suntan Lover", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "10% decrease in incoming Fire damage.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"res_Fire": 10}, "note": ""}, {"name": "Veil of Darkness", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "10% increase in Dark attack damage.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"dmg_Dark": 10}, "note": ""}, {"name": "Waterproof", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "10% decrease in incoming Water damage.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"res_Water": 10}, "note": ""}, {"name": "Work Slave", "rank": 1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "Work Speed +30%\nAttack -30%", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"work_speed": 30, "attack": -30}, "note": ""}, {"name": "Clumsy", "rank": -1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "Work Speed -10%", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"work_speed": -10}, "note": ""}, {"name": "Coward", "rank": -1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "Attack -10%", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": ["Cattiva"], "stats": {"attack": -10}, "note": ""}, {"name": "Downtrodden", "rank": -1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "Defense -10%", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"defense": -10}, "note": ""}, {"name": "Easygoing", "rank": -1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "Active skill cooldown extension -15%", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"skill_cooldown": 15}, "note": ""}, {"name": "Glutton", "rank": -1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "Hunger decreases +10.0% faster.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": ["Relaxaurus"], "stats": {"hunger": 10}, "note": ""}, {"name": "Mercy Hit", "rank": -1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "Pacifist.\nWill not reduce the target's Health below 1.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"non_lethal": true}, "note": ""}, {"name": "Night Owl", "rank": -1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "Tends to nap through the day, due to being nocturnal.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"naps_daytime": true}, "note": ""}, {"name": "Shabby", "rank": -1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "Decreases the value of items when sold by -10%", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"sell_price": -10, "buy_price": 10}, "note": ""}, {"name": "Sickly", "rank": -1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "Max Stamina -25%\n*This effect is only valid for rideable pals.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"stamina": -25}, "note": ""}, {"name": "Unstable", "rank": -1, "icon": "T_icon_skillstatus_rank_arrow_01.webp", "effect": "SAN drops +10.0% faster.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"sanity": 10}, "note": ""}, {"name": "Bottomless Stomach", "rank": -2, "icon": "T_icon_skillstatus_rank_arrow_02.webp", "effect": "Hunger decreases +15.0% faster.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"hunger": 15}, "note": ""}, {"name": "Destructive", "rank": -2, "icon": "T_icon_skillstatus_rank_arrow_02.webp", "effect": "SAN drops +15.0% faster.", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"sanity": 15}, "note": ""}, {"name": "Brittle", "rank": -3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "Defense -20%", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"defense": -20}, "note": ""}, {"name": "Pacifist", "rank": -3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "Attack -20%", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"attack": -20}, "note": ""}, {"name": "Slacker", "rank": -3, "icon": "T_icon_skillstatus_rank_arrow_03.webp", "effect": "Work Speed -30%", "implant": "", "world_tree": false, "mutation": false, "weight": 100, "pals": [], "stats": {"work_speed": -30}, "note": ""}];
 const ICONS = {"T_icon_skillstatus_rank_arrow_01.webp": "data:image/webp;base64,UklGRtQAAABXRUJQVlA4WAoAAAAQAAAAFwAAFwAAQUxQSF4AAAABYBPbVpz/Z+iwgQoUoIDEB4OLrGI2C/RU6KBl9ixV0kbEBMAvRES8QkR8Iq2Vb2gbY4xWP2CDj5d+YFf8DA9P3oqhuQmxNUK8tTIAALY+cIrCJVXuynQEbpPetD4yVlA4IFAAAACQAwCdASoYABgAPmUmkEWjhv9VABABkS0gAAt2rfxscreBMVAAAP7+zL5/67/Tf/mX+oTn6n/+lMsvtynvaL/5l/j/b+p//jyvFYPk2zwAAA==", "T_icon_skillstatus_rank_arrow_02.webp": "data:image/webp;base64,UklGRugAAABXRUJQVlA4WAoAAAAQAAAAFwAAFwAAQUxQSJ4AAAABcFpr29N8qRL5+/QRKBMwQZpjARwyvVjKBAyAZQIUPnUBpvj+84m/pEdHxATAHzs+ncZPMIITEdEpMLSaowS5EpNRU+HkiMh57ro554iYOzJCRIz7AAD9GBGRVHe/Ccqmf1eVHojzopiD6JUykS0qIqJqwUCbHUnzyFRORmJqmimJmSMjMewAAHRCElWXbQuU7d1VVc5aoN2el7IfDVZQOCAkAAAAcAIAnQEqGAAYAD5tNJZHgoCACADYlpAAA9o6AAD++yGAAAAA", "T_icon_skillstatus_rank_arrow_03.webp": "data:image/webp;base64,UklGRjQBAABXRUJQVlA4WAoAAAAQAAAAFwAAFwAAQUxQSOoAAAABgBttf7vmx52kWkMQRO2ca0KNvQSnBWjtiswCjhMQBnD2CNk1K/yU7n7H749jHxEK27ZtmNlxCfzBaDw9NZbJUTRfIsVLM0eRodDDyAJ7BW5zjEimlcqUII43FyUkgzwAQH6AiJgY/2wVwNHd3SGAss+eeagrpVrzlFKat5RS9Qf2oMojn1j4UVmx2p55T85WV06J97Ntdh0o2hq0Bt0OFIl7sRJ0+/OzrUHaF+6uLqVpp4VoGynrd+xBmlHgX8LISFYHsxDIlSldkRBm+5lfTgwAQOl4yZdnK4CFsM/cdU2ILELUruEfBABWUDggJAAAAHACAJ0BKhgAGAA+bTSWR4KAgAgA2JaQAAPaOgAA/vshgAAAAA==", "T_icon_skillstatus_rank_arrow_04.webp": "data:image/webp;base64,UklGRnIBAABXRUJQVlA4WAoAAAAQAAAAFwAAFwAAQUxQSPgAAAABgGLbttvmviWc4jaD9MZ7Yz3MAxBPTwYgnva5qSeQynoyAncoaB721l8X6L9YQ4iICQAAERGYIiIwQ9Vms5rHVZMkm1cDjF3/0fy7HrOWXpl9mF94YPZ1KUSSqZsHgAWXkqSVxkPAQaNxCAzFqfUbA0MnDZJsnA4B8W8I0YRTmuomIoRXn1SVrC8u1klVfVoNUVU1qQBAJVFVpdU9ilBJyKSC6KhrfR0C084H3TRw+BUCpmv0JmvTMLe+SXrvxsec9yS/N0Mk2XfjIsCY65Ok4XtHAqBQACBHPW+8bYtkyIzI9lsIkikUyEIhI/gfgwMEjVxJ5JzfgFZQOCBUAAAAEAMAnQEqGAAYAD5tLJJFpIYBABABsS0gAAlMi0c9mKwAAP77qlNP/7/87g//Qz/ko8qt8i4r9T8/DDgh/+//ncH/6Gf0DL2ffFLWeiKoQypUgAAA", "T_icon_skillstatus_rank_arrow_05.webp": "data:image/webp;base64,UklGRpoBAABXRUJQVlA4WAoAAAAQAAAAFwAAFwAAQUxQSCABAAABkGrb1rJl+33HVxkkuIJP2ptxd21kp7l0iw6VC4DqkNwuwF0TmcYJC/hfG/8VRMQESJLjOI4CHcdxFOjXdnnZFsfYJcDlWITk9BeBX9PJoLw1/l33vHX+3c3z499FT5K8xQ+AoPv2bKn14qJVyur6CDpvl7IHLwAuBrOkrnM/JTKLRqAtZhLyL9g0M1gpyF8BM9ss8MPMbCpXknImzcwIuu1PKHcKJnOU6L8NOm2RMuPfYGbzGanl1E/KLPOvmRnLGQWWHgF8r3rJDTPgqMQP4HPck6Tk/CdA0EO/KxXu7hRL6nsIOmpwXbdwF2CnWFL9kZ9ct2EH3np6X2G7XiHdfmBXknaApRBSxSE8tXc+wUm1IpbvAexVKsbyvb1K/YdWUDggVAAAABADAJ0BKhgAGAA+bSySRaSGAQAQAbEtIAAJTItHPZisAAD++6pTT/+//O4P/0M/5KPKrfIuK/U/Pww4If/v/53B/+hn9Ay9n3xS1noiqEMqVIAAAA=="};
+const STATS = [["attack", "Attack", "Combat", "%", 1], ["defense", "Defense", "Combat", "%", 1], ["max_hp", "Max HP", "Combat", "%", 1], ["hp_regen", "HP Regen", "Combat", "%", 1], ["life_steal", "Life Steal", "Combat", "%", 1], ["skill_cooldown", "Skill Cooldown", "Combat", "%", -1], ["move_speed", "Move Speed", "Movement", "%", 1], ["swim_speed", "Swim Speed", "Movement", "%", 1], ["stamina", "Max Stamina (mount)", "Movement", "%", 1], ["jumps", "Mounted Jumps", "Movement", "", 1], ["work_speed", "Work Speed", "Work & Base", "%", 1], ["hunger", "Hunger Drain", "Work & Base", "%", -1], ["sanity", "SAN Drain", "Work & Base", "%", -1], ["farming", "Farming Suitability", "Work & Base", "", 1], ["breed_speed", "Breeding Speed", "Work & Base", "%", 1], ["egg_speed", "Breeding Farm Egg Speed", "Work & Base", "%", 1], ["hatch_speed", "Egg Incubation Speed", "Work & Base", "%", 1], ["dmg_Neutral", "Neutral Damage", "Element Damage", "%", 1], ["dmg_Fire", "Fire Damage", "Element Damage", "%", 1], ["dmg_Water", "Water Damage", "Element Damage", "%", 1], ["dmg_Grass", "Grass Damage", "Element Damage", "%", 1], ["dmg_Electric", "Electric Damage", "Element Damage", "%", 1], ["dmg_Ice", "Ice Damage", "Element Damage", "%", 1], ["dmg_Ground", "Ground Damage", "Element Damage", "%", 1], ["dmg_Dark", "Dark Damage", "Element Damage", "%", 1], ["dmg_Dragon", "Dragon Damage", "Element Damage", "%", 1], ["res_Neutral", "Neutral Resist", "Element Resist", "%", 1], ["res_Fire", "Fire Resist", "Element Resist", "%", 1], ["res_Water", "Water Resist", "Element Resist", "%", 1], ["res_Grass", "Grass Resist", "Element Resist", "%", 1], ["res_Electric", "Electric Resist", "Element Resist", "%", 1], ["res_Ice", "Ice Resist", "Element Resist", "%", 1], ["res_Ground", "Ground Resist", "Element Resist", "%", 1], ["res_Dark", "Dark Resist", "Element Resist", "%", 1], ["res_Dragon", "Dragon Resist", "Element Resist", "%", 1], ["p_attack", "Player Attack", "Player Buffs", "%", 1], ["p_defense", "Player Defense", "Player Buffs", "%", 1], ["p_work_speed", "Player Work Speed", "Player Buffs", "%", 1], ["p_hp_regen", "Player HP Regen", "Player Buffs", "%", 1], ["p_logging", "Player Logging", "Player Buffs", "%", 1], ["p_mining", "Player Mining", "Player Buffs", "%", 1], ["p_reload", "Player Reload Speed", "Player Buffs", "%", 1], ["p_stamina_use", "Player Stamina Use", "Player Buffs", "%", -1], ["sell_price", "Sell Price", "Economy", "%", 1], ["buy_price", "Buy Price", "Economy", "%", -1], ["drops", "Drops When Defeated", "Economy", "%", 1], ["immune_flinch", "Immune to Flinch", "Special", "", 0], ["immune_knockback", "Immune to Knockback", "Special", "", 0], ["immune_explosion", "Immune to Explosions", "Special", "", 0], ["immune_poison", "Immune to Poison", "Special", "", 0], ["immune_burn", "Immune to Burn", "Special", "", 0], ["night_work", "Works Through the Night", "Special", "", 0], ["naps_daytime", "Naps During the Day", "Special", "", 0], ["non_lethal", "Never Kills (leaves 1 HP)", "Special", "", 0], ["world_tree", "World Tree Resources Don't Vanish", "Special", "", 0]];   // [key, label, group, unit, good_when]
 const MUT = "data:image/webp;base64,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";
+const META = Object.fromEntries(STATS.map(([k, label, group, unit, good]) => [k, {label, group, unit, good}]));
+const GROUPS = [...new Set(STATS.map(s => s[2]))];
+const BY_NAME = Object.fromEntries(DATA.map(d => [d.name, d]));
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const cls = r => r >= 4 ? "r" + r : r >= 1 ? "r" + r : "rn";
-const tcls = r => r >= 1 ? "t" + r : "tn";
+const cls = r => r >= 1 ? "r" + r : "rn";
+const fmt = (v, unit) => (v > 0 ? "+" : "") + (Math.round(v * 10) / 10) + unit;
 
-DATA.forEach((d, i) => {
-  d._text = [d.rank, d.name, d.effect, d.implant, d.world_tree ? "world tree" : "", d.mutation ? "mutation" : "", d.weight, d.pals.join(" ")].join(" ").toLowerCase();
-  d._tr = document.createElement("tr");
-  d._tr.innerHTML = `
-    <td class="c"><span class="tier ${tcls(d.rank)}">${d.rank > 0 ? "+" + d.rank : d.rank}</span></td>
-    <td><div class="plate ${cls(d.rank)}"><img class="rank" src="${ICONS[d.icon]}" alt="tier ${d.rank}"><span class="nm">${esc(d.name)}</span>
-      ${d.world_tree ? '<span class="tree" title="World Tree">🌳</span>' : ""}${d.mutation ? `<img class="tag" src="${MUT}" title="Mutation">` : ""}</div></td>
-    <td class="effect">${esc(d.effect)}</td>
-    <td class="c">${d.implant ? `<span class="implant ${d.implant}">${d.implant}</span>` : "—"}</td>
-    <td class="c">${d.world_tree ? "✔" : ""}</td>
-    <td class="c">${d.mutation ? "✔" : ""}</td>
-    <td class="c">${d.weight ?? ""}</td>
-    <td class="pals">${esc(d.pals.join(", "))}</td>`;
+let picked = [];
+const nolimit = document.getElementById("nolimit");
+const limit = () => nolimit.checked ? Infinity : 4;
+
+function plate(d) {
+  return `<div class="plate ${cls(d.rank)}"><img class="rank" src="${ICONS[d.icon]}" alt="tier ${d.rank}"><span class="nm">${esc(d.name)}</span>
+    ${d.world_tree ? '<span class="tree" title="World Tree">🌳</span>' : ""}${d.mutation ? `<img class="tag" src="${MUT}" title="Mutation">` : ""}</div>`;
+}
+
+// ---- build panel ------------------------------------------------------------------------
+function renderBuild() {
+  const n = Math.max(4, picked.length);
+  document.getElementById("slotcount").textContent = picked.length;
+  document.getElementById("slots").innerHTML = Array.from({length: n}, (_, i) => {
+    const d = BY_NAME[picked[i]];
+    return `<div class="slot">${d ? plate(d).replace('class="plate', `data-rm="${esc(d.name)}" title="Remove" class="plate`) : "Empty slot"}</div>`;
+  }).join("");
+
+  const totals = {}, sources = {};
+  for (const name of picked) for (const [k, v] of Object.entries(BY_NAME[name].stats)) {
+    if (v === true) { totals[k] = true; (sources[k] ??= []).push(name); continue; }
+    totals[k] = (totals[k] || 0) + v;
+    (sources[k] ??= []).push(`${name} ${fmt(v, META[k].unit)}`);
+  }
+  const box = document.getElementById("totals");
+  if (!picked.length) { box.innerHTML = '<div class="empty">Pick passives on the right to see their combined effect.</div>'; return; }
+
+  let html = "";
+  for (const g of GROUPS) {
+    const keys = STATS.filter(s => s[2] === g && k_in(s[0])).map(s => s[0]);
+    if (!keys.length) continue;
+    html += `<div class="group"><h3>${g}</h3>`;
+    if (g === "Special") {
+      html += `<div class="flags">${keys.map(k => `<span class="flag" title="${esc(sources[k].join(", "))}">${META[k].label}</span>`).join("")}</div>`;
+    } else {
+      const scale = Math.max(META[keys[0]].unit === "%" ? 100 : 4, ...keys.map(k => Math.abs(totals[k])));
+      for (const k of keys) {
+        const v = totals[k], m = META[k];
+        const q = v === 0 ? "neutral" : (v > 0) === (m.good > 0) ? "good" : "bad";
+        const w = Math.min(50, Math.abs(v) / scale * 50);
+        const bar = v === 0 ? "" : `<i class="${q}" style="${v > 0 ? `left:50%` : `left:${50 - w}%`};width:${w}%"></i>`;
+        html += `<div class="stat"><span class="lbl">${m.label}</span><span class="val ${q}">${fmt(v, m.unit)}</span>
+                 <div class="bar">${bar}</div><div class="src">${esc(sources[k].join(" · "))}</div></div>`;
+      }
+    }
+    html += "</div>";
+  }
+  const notes = picked.map(n => BY_NAME[n].note && `<div class="note">⚠ ${esc(n)}: ${esc(BY_NAME[n].note)}</div>`).join("");
+  box.innerHTML = html + notes;
+  function k_in(k) { return k in totals; }
+}
+
+// ---- picker ----------------------------------------------------------------------------
+const TIERS = [["All", null], ["+5", [5]], ["+4", [4]], ["+3", [3]], ["+2", [2]], ["+1", [1]], ["Negative", [-1, -2, -3]]];
+let tier = null;
+document.getElementById("tiers").innerHTML = TIERS.map(([l], i) => `<span class="chip${i ? "" : " on"}" data-i="${i}">${l}</span>`).join("");
+const affects = document.getElementById("affects");
+const used = new Set(DATA.flatMap(d => Object.keys(d.stats)));
+for (const g of GROUPS) {
+  const og = document.createElement("optgroup"); og.label = g;
+  STATS.filter(s => s[2] === g && used.has(s[0])).forEach(s => og.append(new Option(s[1], s[0])));
+  affects.append(og);
+}
+
+function fxText(d) {
+  return Object.entries(d.stats).map(([k, v]) => v === true ? META[k].label : `${META[k].label} <b class="${(v > 0) === (META[k].good > 0) ? "good" : "bad"}">${fmt(v, META[k].unit)}</b>`).join("\n");
+}
+DATA.forEach(d => {
+  d._search = [d.name, d.effect, ...Object.keys(d.stats).map(k => META[k].label)].join(" ").toLowerCase();
+  d._card = document.createElement("div");
+  d._card.className = "card";
+  d._card.innerHTML = plate(d) + `<div class="fx">${fxText(d)}</div>`;
+  d._card.onclick = () => toggle(d.name);
 });
 
-const tbody = document.getElementById("rows");
-const filters = [...document.querySelectorAll("[data-f]")];
-const global = document.getElementById("global");
-let sortKey = "rank", sortDir = -1;
+function renderList() {
+  const q = document.getElementById("q").value.trim().toLowerCase();
+  const stat = affects.value;
+  let rows = DATA.filter(d => (!tier || tier.includes(d.rank)) && (!q || q.split(/\s+/).every(t => d._search.includes(t))) && (!stat || stat in d.stats));
+  rows.sort(stat
+    ? (a, b) => { const va = a.stats[stat] === true ? 1 : a.stats[stat], vb = b.stats[stat] === true ? 1 : b.stats[stat];
+                  return (vb - va) * (META[stat].good < 0 ? -1 : 1) || b.rank - a.rank; }
+    : (a, b) => b.rank - a.rank || a.name.localeCompare(b.name));
+  const full = picked.length >= limit();
+  rows.forEach(d => {
+    const sel = picked.includes(d.name);
+    d._card.classList.toggle("sel", sel);
+    d._card.classList.toggle("full", full && !sel);
+  });
+  document.getElementById("list").replaceChildren(...rows.map(d => d._card));
+  document.getElementById("listcount").textContent = `${rows.length} passives` + (stat ? ` affecting ${META[stat].label}, best first` : "");
+}
 
-function textMatch(hay, q) {
-  q = q.trim().toLowerCase();
-  if (!q) return true;
-  return q.split("&").every(part => {
-    part = part.trim();
-    if (part.startsWith("!")) return !part.slice(1).split("|").some(t => t.trim() && hay.includes(t.trim()));
-    return part.split("|").some(t => hay.includes(t.trim()));
-  });
+function toggle(name) {
+  if (picked.includes(name)) picked = picked.filter(n => n !== name);
+  else if (picked.length < limit()) picked.push(name);
+  else return;
+  update();
 }
-function numMatch(v, q) {
-  q = q.replace(/\s/g, "");
-  if (!q) return true;
-  if (v == null) return false;
-  const m = q.match(/^(<=|>=|<|>|=)?(-?\d+(?:\.\d+)?)$/);
-  if (!m) return String(v).includes(q);
-  const n = +m[2];
-  return {"<": v < n, "<=": v <= n, ">": v > n, ">=": v >= n}[m[1]] ?? v === n;
+function update() {
+  history.replaceState(null, "", picked.length ? "#" + picked.map(encodeURIComponent).join(",") : location.pathname);
+  renderBuild(); renderList();
 }
-function pass(d) {
-  if (!textMatch(d._text, global.value)) return false;
-  for (const f of filters) {
-    const k = f.dataset.f, q = f.value;
-    if (!q) continue;
-    if (k === "rank") {
-      if (q === "pos" ? d.rank < 1 : q === "neg" ? d.rank > 0 : q === "ge3" ? d.rank < 3 : q === "ge4" ? d.rank < 4 : d.rank !== +q) return false;
-    } else if (k === "implant") {
-      if (q === "none" ? d.implant : q === "any" ? !d.implant : d.implant !== q) return false;
-    } else if (k === "world_tree" || k === "mutation") {
-      if (+d[k] !== +q) return false;
-    } else if (k === "weight") {
-      if (!numMatch(d.weight, q)) return false;
-    } else {
-      const hay = (k === "pals" ? d.pals.join(", ") : d[k]).toLowerCase();
-      if (!textMatch(hay, q)) return false;
-    }
-  }
-  return true;
-}
-function val(d, k) {
-  const v = k === "pals" ? d.pals.length : d[k];
-  return typeof v === "boolean" ? +v : v ?? (typeof DATA[0][k] === "number" ? -Infinity : "");
-}
-function render() {
-  const rows = DATA.filter(pass).sort((a, b) => {
-    const x = val(a, sortKey), y = val(b, sortKey);
-    const c = typeof x === "number" && typeof y === "number" ? x - y : String(x).localeCompare(String(y));
-    return c * sortDir || a.name.localeCompare(b.name);
-  });
-  tbody.replaceChildren(...rows.map(d => d._tr));
-  document.getElementById("count").textContent = `${rows.length} of ${DATA.length} passives`;
-  document.querySelectorAll("tr.titles th").forEach(th => {
-    const on = th.dataset.k === sortKey;
-    th.classList.toggle("sorted", on);
-    th.querySelector(".arrow").textContent = on ? (sortDir > 0 ? "▲" : "▼") : "▲▼";
-  });
-}
-document.querySelectorAll("tr.titles th").forEach(th => th.addEventListener("click", () => {
-  const k = th.dataset.k;
-  if (k === sortKey) sortDir = -sortDir; else { sortKey = k; sortDir = ["rank", "weight", "world_tree", "mutation", "pals"].includes(k) ? -1 : 1; }
-  render();
-}));
-[...filters, global].forEach(el => el.addEventListener("input", render));
-document.getElementById("reset").onclick = () => { filters.forEach(f => f.value = ""); global.value = ""; render(); };
-render();
+
+document.getElementById("slots").addEventListener("click", e => { const p = e.target.closest("[data-rm]"); if (p) toggle(p.dataset.rm); });
+document.getElementById("tiers").addEventListener("click", e => {
+  const c = e.target.closest(".chip"); if (!c) return;
+  document.querySelectorAll(".chip").forEach(x => x.classList.toggle("on", x === c));
+  tier = TIERS[+c.dataset.i][1]; renderList();
+});
+document.getElementById("q").addEventListener("input", renderList);
+affects.addEventListener("change", renderList);
+nolimit.addEventListener("change", () => { if (!nolimit.checked) picked = picked.slice(0, 4); update(); });
+document.getElementById("clear").onclick = () => { picked = []; update(); };
+document.getElementById("share").onclick = async () => {
+  await navigator.clipboard.writeText(location.href);
+  const c = document.getElementById("copied"); c.style.opacity = 1; setTimeout(() => c.style.opacity = 0, 1500);
+};
+
+// restore from share link
+picked = decodeURIComponent(location.hash.slice(1)).split(",").filter(n => n in BY_NAME);
+if (picked.length > 4) nolimit.checked = true;
+update();
 </script>
 </body>
 </html>
